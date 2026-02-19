@@ -647,7 +647,7 @@ export function PlayerLayer() {
           "fixed z-[70] overflow-hidden border border-slate-50/15 bg-[rgba(7,14,22,0.98)] text-slate-100 shadow-[0_14px_50px_rgba(2,8,16,0.65)] will-change-transform",
           mode === "full"
             ? "inset-0 rounded-none border-none lg:inset-4 lg:rounded-[2rem] lg:border lg:border-slate-100/10"
-            : "left-2 right-2 h-[86px] max-w-[calc(100vw-1rem)] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
+            : "left-2 right-2 h-[82px] max-w-[calc(100vw-1rem)] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
         )}
         style={
           mode === "mini"
@@ -696,7 +696,7 @@ export function PlayerLayer() {
               "relative overflow-hidden bg-black will-change-transform",
               mode === "full"
                 ? "aspect-video w-full touch-none lg:h-[46dvh] lg:aspect-auto"
-                : "h-full w-20 shrink-0 sm:w-24",
+                : "h-full w-[72px] shrink-0 sm:w-24",
             )}
           >
             {mode === "full" ? (
@@ -1086,19 +1086,18 @@ export function PlayerLayer() {
               />
             </div>
           ) : (
-            <div className="relative flex flex-1 items-center justify-between gap-1.5 px-2 py-2 md:gap-3 md:px-4">
-              <div className="min-w-0 flex-1 pr-1">
+            <div className="relative grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 py-1.5 md:gap-3 md:px-4">
+              <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-50">
                   {currentVideo.title}
                 </p>
-                <p className="truncate text-[0.65rem] uppercase tracking-[0.1em] text-slate-300/85">
-                  {currentVideo.category}{" "}
+                <p className="truncate text-[0.62rem] uppercase tracking-[0.1em] text-slate-300/85">
                   {knownDuration > 0
-                    ? `| ${formatTime(currentTime)} / ${formatTime(knownDuration)}`
+                    ? `${formatTime(currentTime)} / ${formatTime(knownDuration)}`
                     : ""}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={(event) => {
@@ -1106,7 +1105,7 @@ export function PlayerLayer() {
                     setPlaying(!isPlaying);
                   }}
                   aria-label={isPlaying ? "Pause mini player" : "Play mini player"}
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-[#31d0aa]/45 bg-[#31d0aa]/16 text-[0.78rem] font-semibold text-[#9af2df]"
+                  className="grid h-7 w-7 place-items-center rounded-md border border-[#31d0aa]/45 bg-[#31d0aa]/16 text-[0.72rem] font-semibold text-[#9af2df]"
                 >
                   {isPlaying ? "II" : ">"}
                 </button>
@@ -1117,7 +1116,7 @@ export function PlayerLayer() {
                     close();
                   }}
                   aria-label="Close mini player"
-                  className="grid h-8 w-8 place-items-center rounded-lg border border-slate-100/20 bg-slate-900/40 text-[0.72rem] font-semibold"
+                  className="grid h-7 w-7 place-items-center rounded-md border border-slate-100/20 bg-slate-900/40 text-[0.68rem] font-semibold"
                 >
                   X
                 </button>
