@@ -38,11 +38,15 @@ import { useVideoMetadataStore } from "@/store/video-metadata-store";
 type DragSession = {
   active: boolean;
   pointerId: number | null;
+  pointerType: string;
   startY: number;
+  startTs: number;
   lastY: number;
   lastTs: number;
   velocity: number;
   nextOffset: number;
+  isTapCandidate: boolean;
+  dragActivated: boolean;
   rafId: number;
 };
 
@@ -53,7 +57,10 @@ type NextCountdownState = {
 } | null;
 
 const MINIMIZE_DISTANCE = 140;
-const MINIMIZE_VELOCITY = 1.1;
+const MINIMIZE_VELOCITY = 1.45;
+const DRAG_ACTIVATION_DISTANCE = 12;
+const TAP_MAX_DISTANCE = 9;
+const TAP_MAX_DURATION = 280;
 
 export function PlayerLayer() {
   const router = useRouter();
@@ -67,11 +74,15 @@ export function PlayerLayer() {
   const dragSessionRef = useRef<DragSession>({
     active: false,
     pointerId: null,
+    pointerType: "",
     startY: 0,
+    startTs: 0,
     lastY: 0,
     lastTs: 0,
     velocity: 0,
     nextOffset: 0,
+    isTapCandidate: false,
+    dragActivated: false,
     rafId: 0,
   });
 
@@ -148,11 +159,15 @@ export function PlayerLayer() {
     const dragSession = dragSessionRef.current;
     dragSession.active = false;
     dragSession.pointerId = null;
+    dragSession.pointerType = "";
     dragSession.startY = 0;
+    dragSession.startTs = 0;
     dragSession.lastY = 0;
     dragSession.lastTs = 0;
     dragSession.velocity = 0;
     dragSession.nextOffset = 0;
+    dragSession.isTapCandidate = false;
+    dragSession.dragActivated = false;
 
     if (dragSession.rafId) {
       window.cancelAnimationFrame(dragSession.rafId);
@@ -188,6 +203,20 @@ export function PlayerLayer() {
         }
       }
 
+      const pressDuration = performance.now() - dragSession.startTs;
+      const isTapGesture =
+        dragSession.isTapCandidate &&
+        !dragSession.dragActivated &&
+        pressDuration <= TAP_MAX_DURATION;
+
+      if (isTapGesture) {
+        setPlaying(!isPlaying);
+        setRelatedOpen(false);
+        setIsDragging(false);
+        resetGestureSession();
+        return;
+      }
+
       const shouldMinimize =
         dragSession.nextOffset > MINIMIZE_DISTANCE ||
         dragSession.velocity > MINIMIZE_VELOCITY;
@@ -202,7 +231,7 @@ export function PlayerLayer() {
       resetDragToOrigin();
       resetGestureSession();
     },
-    [minimize, resetDragToOrigin, resetGestureSession],
+    [isPlaying, minimize, resetDragToOrigin, resetGestureSession, setPlaying],
   );
 
   const onSurfacePointerDown = useCallback(
@@ -218,18 +247,21 @@ export function PlayerLayer() {
       const dragSession = dragSessionRef.current;
       dragSession.active = true;
       dragSession.pointerId = event.pointerId;
+      dragSession.pointerType = event.pointerType;
       dragSession.startY = event.clientY;
+      dragSession.startTs = performance.now();
       dragSession.lastY = event.clientY;
-      dragSession.lastTs = performance.now();
+      dragSession.lastTs = dragSession.startTs;
       dragSession.velocity = 0;
       dragSession.nextOffset = 0;
+      dragSession.isTapCandidate = true;
+      dragSession.dragActivated = false;
 
       try {
         event.currentTarget.setPointerCapture(event.pointerId);
       } catch {
         // Ignore capture errors from synthetic test events.
       }
-      setIsDragging(true);
       setRelatedOpen(false);
     },
     [mode],
@@ -243,22 +275,48 @@ export function PlayerLayer() {
         return;
       }
 
+      const totalDistance = Math.abs(event.clientY - dragSession.startY);
+      if (totalDistance > TAP_MAX_DISTANCE) {
+        dragSession.isTapCandidate = false;
+      }
+
       const now = performance.now();
+      const rawOffset = event.clientY - dragSession.startY;
+
+      if (rawOffset <= DRAG_ACTIVATION_DISTANCE) {
+        dragSession.lastY = event.clientY;
+        dragSession.lastTs = now;
+        dragSession.velocity = 0;
+        dragSession.nextOffset = 0;
+        if (dragSession.dragActivated) {
+          dragSession.dragActivated = false;
+          setIsDragging(false);
+          dragY.set(0);
+        }
+        return;
+      }
+
+      if (!dragSession.dragActivated) {
+        dragSession.dragActivated = true;
+        setIsDragging(true);
+      }
+
       const dt = Math.max(1, now - dragSession.lastTs);
       const deltaY = event.clientY - dragSession.lastY;
-      dragSession.velocity = deltaY / dt;
+      const instantVelocity = Math.max(0, deltaY / dt);
+      dragSession.velocity = dragSession.velocity * 0.62 + instantVelocity * 0.38;
       dragSession.lastY = event.clientY;
       dragSession.lastTs = now;
 
-      const offset = Math.max(0, event.clientY - dragSession.startY);
+      const offset = Math.max(0, rawOffset - DRAG_ACTIVATION_DISTANCE);
       dragSession.nextOffset = offset;
       flushDragFrame();
 
-      if (event.pointerType === "touch") {
+      if (event.pointerType === "touch" && dragSession.dragActivated) {
         event.preventDefault();
       }
     },
-    [flushDragFrame],
+    [dragY, flushDragFrame],
   );
 
   const onSurfacePointerUp = useCallback(
@@ -589,9 +647,9 @@ export function PlayerLayer() {
           "fixed z-[70] overflow-hidden border border-slate-50/15 bg-[rgba(7,14,22,0.98)] text-slate-100 shadow-[0_14px_50px_rgba(2,8,16,0.65)] will-change-transform",
           mode === "full"
             ? "inset-0 rounded-none border-none lg:inset-4 lg:rounded-[2rem] lg:border lg:border-slate-100/10"
-            : "left-3 right-3 h-20 rounded-2xl md:left-auto md:right-5 md:h-24 md:w-[430px]",
+            : "left-2 right-2 h-[88px] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
         )}
-        style={mode === "mini" ? { bottom: "calc(0.7rem + env(safe-area-inset-bottom))" } : undefined}
+        style={mode === "mini" ? { bottom: "calc(0.45rem + env(safe-area-inset-bottom))" } : undefined}
         data-testid="global-player"
       >
         <div
@@ -683,7 +741,7 @@ export function PlayerLayer() {
                   setVideoError("Unable to load this video. Try another clip.");
                 }}
                 onProgress={(progressState) => {
-                  if (isScrubbing) {
+                  if (isScrubbing || isDragging) {
                     return;
                   }
 
@@ -748,6 +806,23 @@ export function PlayerLayer() {
                   >
                     Retry
                   </button>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {mode === "full" && !isPlaying && !canShowLoadingOverlay && !videoError ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="pointer-events-none absolute inset-0 z-[22] bg-[radial-gradient(circle_at_center,rgba(3,8,14,0.06),rgba(3,8,14,0.62))]"
+                >
+                  <div className="flex h-full items-center justify-center">
+                    <span className="rounded-full border border-slate-100/30 bg-black/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-slate-100">
+                      Tap to play
+                    </span>
+                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -1003,19 +1078,19 @@ export function PlayerLayer() {
               />
             </div>
           ) : (
-            <div className="relative flex flex-1 items-center justify-between gap-2 px-3 md:gap-3 md:px-4">
-              <div className="min-w-0 pr-2">
+            <div className="relative flex flex-1 items-center justify-between gap-2 px-2.5 py-2 md:gap-3 md:px-4">
+              <div className="min-w-0 pr-1">
                 <p className="truncate text-sm font-semibold text-slate-50">
                   {currentVideo.title}
                 </p>
-                <p className="truncate text-[0.7rem] uppercase tracking-[0.08em] text-slate-300/80">
+                <p className="truncate text-[0.65rem] uppercase tracking-[0.1em] text-slate-300/85">
                   {currentVideo.category}{" "}
                   {knownDuration > 0
                     ? `| ${formatTime(currentTime)} / ${formatTime(knownDuration)}`
                     : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={(event) => {
@@ -1023,7 +1098,7 @@ export function PlayerLayer() {
                     setPlaying(!isPlaying);
                   }}
                   aria-label={isPlaying ? "Pause mini player" : "Play mini player"}
-                  className="rounded-lg border border-slate-100/20 px-2 py-1 text-xs font-semibold"
+                  className="rounded-lg border border-[#31d0aa]/45 bg-[#31d0aa]/16 px-2.5 py-1.5 text-[0.68rem] font-semibold text-[#9af2df]"
                 >
                   {isPlaying ? "Pause" : "Play"}
                 </button>
@@ -1034,9 +1109,9 @@ export function PlayerLayer() {
                     close();
                   }}
                   aria-label="Close mini player"
-                  className="rounded-lg border border-slate-100/20 px-2 py-1 text-xs font-semibold"
+                  className="rounded-lg border border-slate-100/20 bg-slate-900/40 px-2.5 py-1.5 text-[0.68rem] font-semibold"
                 >
-                  Close
+                  X
                 </button>
               </div>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-slate-500/35">

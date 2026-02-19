@@ -85,6 +85,19 @@ export function RelatedSheet({
               {relatedCount} videos
             </p>
           </button>
+          {isOpen ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenChange(false);
+              }}
+              aria-label="Close related videos"
+              className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-100/20 bg-slate-900/60 px-2 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.08em] text-slate-100"
+            >
+              Close
+            </button>
+          ) : null}
         </div>
 
         {relatedVideos.length === 0 ? (
