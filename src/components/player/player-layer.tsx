@@ -93,8 +93,8 @@ export function PlayerLayer() {
   const [isDragging, setIsDragging] = useState(false);
 
   const dragY = useMotionValue(0);
-  const dragScale = useTransform(dragY, [0, 240], [1, 0.86]);
-  const dragOpacity = useTransform(dragY, [0, 240], [1, 0.89]);
+  const panelScale = useTransform(dragY, [0, 240], [1, 0.96]);
+  const panelOpacity = useTransform(dragY, [0, 240], [1, 0.97]);
 
   const closePlayer = usePlayerStore((state) => state.closePlayer);
   const clearSkipFeedback = usePlayerStore((state) => state.clearSkipFeedback);
@@ -652,7 +652,7 @@ export function PlayerLayer() {
         style={mode === "mini" ? { bottom: "calc(0.45rem + env(safe-area-inset-bottom))" } : undefined}
         data-testid="global-player"
       >
-        <div
+        <motion.div
           role={mode === "mini" ? "button" : undefined}
           tabIndex={mode === "mini" ? 0 : undefined}
           aria-label={mode === "mini" ? "Restore full player" : undefined}
@@ -671,6 +671,15 @@ export function PlayerLayer() {
             "relative h-full w-full overflow-hidden",
             mode === "full" ? "flex flex-col" : "flex items-center",
           )}
+          style={
+            mode === "full"
+              ? {
+                  y: dragY,
+                  scale: panelScale,
+                  opacity: panelOpacity,
+                }
+              : undefined
+          }
         >
           <motion.div
             layoutId={layoutId}
@@ -681,15 +690,6 @@ export function PlayerLayer() {
                 ? "aspect-video w-full touch-none lg:h-[46dvh] lg:aspect-auto"
                 : "h-full w-28 shrink-0",
             )}
-            style={
-              mode === "full"
-                ? {
-                    y: dragY,
-                    scale: dragScale,
-                    opacity: dragOpacity,
-                  }
-                : undefined
-            }
           >
             {mode === "full" ? (
               <div
@@ -1122,7 +1122,7 @@ export function PlayerLayer() {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       </motion.section>
     </AnimatePresence>
   );
