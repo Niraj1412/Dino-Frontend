@@ -647,9 +647,15 @@ export function PlayerLayer() {
           "fixed z-[70] overflow-hidden border border-slate-50/15 bg-[rgba(7,14,22,0.98)] text-slate-100 shadow-[0_14px_50px_rgba(2,8,16,0.65)] will-change-transform",
           mode === "full"
             ? "inset-0 rounded-none border-none lg:inset-4 lg:rounded-[2rem] lg:border lg:border-slate-100/10"
-            : "left-2 right-2 h-[88px] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
+            : "left-[max(0.5rem,env(safe-area-inset-left))] right-[max(0.5rem,env(safe-area-inset-right))] h-[88px] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
         )}
-        style={mode === "mini" ? { bottom: "calc(0.45rem + env(safe-area-inset-bottom))" } : undefined}
+        style={
+          mode === "mini"
+            ? {
+                bottom: "calc(0.45rem + env(safe-area-inset-bottom))",
+              }
+            : undefined
+        }
         data-testid="global-player"
       >
         <motion.div
@@ -688,7 +694,7 @@ export function PlayerLayer() {
               "relative overflow-hidden bg-black will-change-transform",
               mode === "full"
                 ? "aspect-video w-full touch-none lg:h-[46dvh] lg:aspect-auto"
-                : "h-full w-28 shrink-0",
+                : "h-full w-24 shrink-0 sm:w-28",
             )}
           >
             {mode === "full" ? (
@@ -1078,7 +1084,7 @@ export function PlayerLayer() {
               />
             </div>
           ) : (
-            <div className="relative flex flex-1 items-center justify-between gap-2 px-2.5 py-2 md:gap-3 md:px-4">
+            <div className="relative flex flex-1 items-center justify-between gap-1.5 px-2 py-2 md:gap-3 md:px-4">
               <div className="min-w-0 pr-1">
                 <p className="truncate text-sm font-semibold text-slate-50">
                   {currentVideo.title}
@@ -1090,7 +1096,7 @@ export function PlayerLayer() {
                     : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
                   onClick={(event) => {
@@ -1098,9 +1104,9 @@ export function PlayerLayer() {
                     setPlaying(!isPlaying);
                   }}
                   aria-label={isPlaying ? "Pause mini player" : "Play mini player"}
-                  className="rounded-lg border border-[#31d0aa]/45 bg-[#31d0aa]/16 px-2.5 py-1.5 text-[0.68rem] font-semibold text-[#9af2df]"
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-[#31d0aa]/45 bg-[#31d0aa]/16 text-[0.78rem] font-semibold text-[#9af2df]"
                 >
-                  {isPlaying ? "Pause" : "Play"}
+                  {isPlaying ? "II" : ">"}
                 </button>
                 <button
                   type="button"
@@ -1109,7 +1115,7 @@ export function PlayerLayer() {
                     close();
                   }}
                   aria-label="Close mini player"
-                  className="rounded-lg border border-slate-100/20 bg-slate-900/40 px-2.5 py-1.5 text-[0.68rem] font-semibold"
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-slate-100/20 bg-slate-900/40 text-[0.72rem] font-semibold"
                 >
                   X
                 </button>
