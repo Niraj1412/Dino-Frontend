@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useDragControls } from "framer-motion";
 import { Virtuoso } from "react-virtuoso";
 
 import { getThumbnailUrl } from "@/data/videos";
@@ -35,6 +35,7 @@ export function RelatedSheet({
   onPrefetch,
 }: RelatedSheetProps) {
   const relatedCount = relatedVideos.length;
+  const dragControls = useDragControls();
 
   return (
     <motion.aside className="pointer-events-none absolute inset-x-0 bottom-0 z-30 mx-auto w-full max-w-2xl">
@@ -44,36 +45,47 @@ export function RelatedSheet({
         animate={{ y: isOpen ? 0 : CLOSED_Y }}
         transition={{ type: "spring", stiffness: 260, damping: 30 }}
         drag="y"
+        dragListener={false}
+        dragControls={dragControls}
         dragConstraints={{ top: 0, bottom: CLOSED_Y }}
         dragElastic={0.1}
         dragMomentum={false}
         onDragEnd={(_, info) => {
-          if (info.offset.y > 70 || info.velocity.y > 700) {
+          const shouldClose = info.offset.y > 70 || info.velocity.y > 700;
+          const shouldOpen = info.offset.y < -70 || info.velocity.y < -700;
+
+          if (shouldClose && isOpen) {
             onOpenChange(false);
             return;
           }
 
-          if (info.offset.y < -70 || info.velocity.y < -700) {
+          if (shouldOpen && !isOpen) {
             onOpenChange(true);
           }
         }}
       >
-        <button
-          type="button"
-          onClick={() => onOpenChange(!isOpen)}
-          aria-expanded={isOpen}
-          aria-controls="related-video-list"
-          aria-label={`${isOpen ? "Hide" : "Show"} related videos in ${category}`}
-          className="flex h-[72px] w-full flex-col items-center justify-center gap-1 border-b border-slate-100/10 bg-[rgba(13,24,37,0.92)] touch-none"
-        >
-          <span className="h-1.5 w-12 rounded-full bg-slate-300/65" />
-          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-slate-300">
-            Related in {category}
-          </p>
-          <p className="text-[0.62rem] uppercase tracking-[0.1em] text-slate-400/90">
-            {relatedCount} videos
-          </p>
-        </button>
+        <div className="relative h-[72px] border-b border-slate-100/10 bg-[rgba(13,24,37,0.92)]">
+          <div
+            aria-hidden
+            onPointerDown={(event) => dragControls.start(event)}
+            className="absolute left-1/2 top-2 z-10 h-1.5 w-12 -translate-x-1/2 rounded-full bg-slate-300/65 touch-none"
+          />
+          <button
+            type="button"
+            onClick={() => onOpenChange(!isOpen)}
+            aria-expanded={isOpen}
+            aria-controls="related-video-list"
+            aria-label={`${isOpen ? "Hide" : "Show"} related videos in ${category}`}
+            className="flex h-full w-full flex-col items-center justify-center gap-1 pt-2"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.13em] text-slate-300">
+              Related in {category}
+            </p>
+            <p className="text-[0.62rem] uppercase tracking-[0.1em] text-slate-400/90">
+              {relatedCount} videos
+            </p>
+          </button>
+        </div>
 
         {relatedVideos.length === 0 ? (
           <div className="px-4 py-6 text-sm text-slate-300">
