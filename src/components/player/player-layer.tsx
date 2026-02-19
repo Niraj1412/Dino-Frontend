@@ -320,6 +320,21 @@ export function PlayerLayer() {
   }, [clearSkipFeedback, skipFeedback]);
 
   useEffect(() => {
+    if (!isScrubbing) {
+      return;
+    }
+
+    const endScrub = () => setIsScrubbing(false);
+    window.addEventListener("pointerup", endScrub);
+    window.addEventListener("pointercancel", endScrub);
+
+    return () => {
+      window.removeEventListener("pointerup", endScrub);
+      window.removeEventListener("pointercancel", endScrub);
+    };
+  }, [isScrubbing]);
+
+  useEffect(() => {
     if (!pipNotice) {
       return;
     }
@@ -605,7 +620,7 @@ export function PlayerLayer() {
             className={cn(
               "relative overflow-hidden bg-black will-change-transform",
               mode === "full"
-                ? "aspect-video w-full touch-none"
+                ? "aspect-video w-full touch-none lg:h-[46dvh] lg:aspect-auto"
                 : "h-full w-28 shrink-0",
             )}
             style={
@@ -773,6 +788,33 @@ export function PlayerLayer() {
                 </motion.div>
               ) : null}
             </AnimatePresence>
+
+            {mode === "full" ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 hidden lg:block">
+                <div className="bg-gradient-to-t from-black/88 via-black/55 to-transparent px-4 pb-3 pt-10">
+                  <div className="pointer-events-auto flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPlaying(!isPlaying)}
+                      aria-label={isPlaying ? "Pause video" : "Play video"}
+                      className="rounded-full border border-slate-100/20 bg-black/45 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-100 backdrop-blur"
+                    >
+                      {isPlaying ? "Pause" : "Play"}
+                    </button>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-100/90">
+                      {formatTime(currentTime)} /{" "}
+                      {knownDuration > 0 ? formatTime(knownDuration) : "--:--"}
+                    </p>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full bg-slate-500/45">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,#31d0aa,#5da8ff)] transition-[width] duration-150"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </motion.div>
 
           {mode === "full" ? (
