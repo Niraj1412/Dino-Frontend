@@ -5,7 +5,7 @@ A production-style video player application inspired by mobile YouTube interacti
 ## Live Links
 
 - Repository: `https://github.com/Niraj1412/Dino-Frontend`
-- Live Demo: `https://<your-vercel-url>`
+- Live Demo: `https://dino-frontend-azure.vercel.app/`
 
 Replace the placeholders above before submission.
 
