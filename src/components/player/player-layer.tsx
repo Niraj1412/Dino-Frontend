@@ -647,12 +647,14 @@ export function PlayerLayer() {
           "fixed z-[70] overflow-hidden border border-slate-50/15 bg-[rgba(7,14,22,0.98)] text-slate-100 shadow-[0_14px_50px_rgba(2,8,16,0.65)] will-change-transform",
           mode === "full"
             ? "inset-0 rounded-none border-none lg:inset-4 lg:rounded-[2rem] lg:border lg:border-slate-100/10"
-            : "left-[max(0.5rem,env(safe-area-inset-left))] right-[max(0.5rem,env(safe-area-inset-right))] h-[88px] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
+            : "left-2 right-2 h-[86px] max-w-[calc(100vw-1rem)] rounded-2xl border-slate-100/20 bg-[rgba(8,16,25,0.96)] md:left-auto md:right-5 md:h-24 md:w-[430px]",
         )}
         style={
           mode === "mini"
             ? {
                 bottom: "calc(0.45rem + env(safe-area-inset-bottom))",
+                left: "calc(env(safe-area-inset-left) + 0.5rem)",
+                right: "calc(env(safe-area-inset-right) + 0.5rem)",
               }
             : undefined
         }
@@ -694,7 +696,7 @@ export function PlayerLayer() {
               "relative overflow-hidden bg-black will-change-transform",
               mode === "full"
                 ? "aspect-video w-full touch-none lg:h-[46dvh] lg:aspect-auto"
-                : "h-full w-24 shrink-0 sm:w-28",
+                : "h-full w-20 shrink-0 sm:w-24",
             )}
           >
             {mode === "full" ? (
@@ -1085,7 +1087,7 @@ export function PlayerLayer() {
             </div>
           ) : (
             <div className="relative flex flex-1 items-center justify-between gap-1.5 px-2 py-2 md:gap-3 md:px-4">
-              <div className="min-w-0 pr-1">
+              <div className="min-w-0 flex-1 pr-1">
                 <p className="truncate text-sm font-semibold text-slate-50">
                   {currentVideo.title}
                 </p>
